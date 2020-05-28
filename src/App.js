@@ -1,6 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Route } from 'react-router-dom';
-import data from './data';
+import { connect } from "react-redux";
+
+// Actions
+import { fetchProductData } from "./actions/productActions";
+import { addItem, removeItem } from "./actions/cartActions";
 
 // Context
 import { ProductContext } from "./contexts/ProductContext";
@@ -11,26 +15,11 @@ import Navigation from './components/Navigation';
 import Products from './components/Products';
 import ShoppingCart from './components/ShoppingCart';
 
-function App() {
-	const [products] = useState(data);
-	const [cart, setCart] = useState(() => {
-			let item = localStorage.getItem("cart");
-			return item ? JSON.parse(item) : [];
-		}
-	);
+function App({products, cart, fetchProductData, addItem, removeItem}) {
 
-	const addItem = item => {
-		// add the given item to the cart
-		if(!Object.values(cart).includes(item)) {
-			setCart([...cart, item]);
-			
-		}
-	};
-
-	const removeItem = itemId => {
-		// remove the given item from the cart
-		setCart(cart.filter(cartItem => cartItem.id !== itemId));
-	}
+	React.useEffect(() => {
+		fetchProductData();
+	});
 
 	React.useEffect(() => localStorage.setItem("cart", JSON.stringify(cart)), [cart]);
 
@@ -51,5 +40,10 @@ function App() {
 		</div>
 	);
 }
-
-export default App;
+const mapStateToProps = state => {
+	return {
+		products: state.productReducer.data,
+		cart: state.cartReducer.cart
+	}
+}
+export default connect(mapStateToProps, {fetchProductData, addItem, removeItem})(App);
