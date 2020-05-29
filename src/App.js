@@ -1,34 +1,49 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Route } from 'react-router-dom';
-import data from './data';
+import { connect } from "react-redux";
+
+// Actions
+import { fetchProductData } from "./actions/productActions";
+import { addItem, removeItem } from "./actions/cartActions";
+
+// Context
+import { ProductContext } from "./contexts/ProductContext";
+import { CartContext } from "./contexts/CartContext";
 
 // Components
 import Navigation from './components/Navigation';
 import Products from './components/Products';
 import ShoppingCart from './components/ShoppingCart';
 
-function App() {
-	const [products] = useState(data);
-	const [cart, setCart] = useState([]);
+function App({products, cart, fetchProductData, addItem, removeItem}) {
 
-	const addItem = item => {
-		// add the given item to the cart
-	};
+	React.useEffect(() => {
+		fetchProductData();
+	});
 
-	return (
+	React.useEffect(() => localStorage.setItem("cart", JSON.stringify(cart)), [cart]);
+
+	return (	
 		<div className="App">
-			<Navigation cart={cart} />
+			<ProductContext.Provider value = {{ products, addItem }}>
+				<CartContext.Provider value = {{cart, removeItem}}>
 
-			{/* Routes */}
-			<Route exact path="/">
-				<Products products={products} addItem={addItem} />
-			</Route>
+					<Navigation cartLength = {cart.length} />
 
-			<Route path="/cart">
-				<ShoppingCart cart={cart} />
-			</Route>
+					{/* Routes */}
+					<Route exact path="/" component = {Products} />
+
+					<Route path="/cart" component = {ShoppingCart} />
+
+				</CartContext.Provider>
+			</ProductContext.Provider>
 		</div>
 	);
 }
-
-export default App;
+const mapStateToProps = state => {
+	return {
+		products: state.productReducer.data,
+		cart: state.cartReducer.cart
+	}
+}
+export default connect(mapStateToProps, {fetchProductData, addItem, removeItem})(App);
